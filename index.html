@@ -40,7 +40,7 @@
     line-height: 1.45;
     padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
   }
-  .contenedor { max-width: 680px; margin: 0 auto; padding: 0 16px 40px; }
+  .contenedor { max-width: 1180px; margin: 0 auto; padding: 0 16px 40px; }
 
   header { padding: 28px 0 18px; }
   h1 {
@@ -107,10 +107,28 @@
 
   .vacio { padding: 32px 0; color: var(--tenue); text-align: center; }
   footer { margin-top: 24px; color: var(--tenue); font-size: 0.8rem; }
+
+.ctx{background:linear-gradient(135deg,#1e293b,#334155);color:#e2e8f0;border-radius:14px;padding:22px 24px;margin-bottom:26px}
+.ctx-tag{display:inline-block;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;background:rgba(255,255,255,.14);padding:4px 10px;border-radius:99px;margin-bottom:10px}
+.ctx-title{margin:0 0 8px;font-size:1.22rem;font-weight:650;color:#fff;line-height:1.3}
+.ctx-p{margin:0 0 14px;font-size:.92rem;line-height:1.6;color:#cbd5e1;max-width:78ch}
+.ctx-p strong{color:#fff;font-weight:600}
+.ctx-flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:.78rem}
+.ctx-flow span{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);padding:5px 11px;border-radius:7px;white-space:nowrap}
+.ctx-flow i{opacity:.5;font-style:normal}
+@media(min-width:760px){#lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}}
+@media(max-width:600px){.ctx{padding:18px 16px}.ctx-title{font-size:1.05rem}}
 </style>
 </head>
 <body>
 <div class="contenedor">
+  <div class="ctx">
+    <div class="ctx-tag">Portfolio demo &middot; sample data</div>
+    <h2 class="ctx-title">Microsip ERP &rarr; p&aacute;gina m&oacute;vil por QR</h2>
+    <p class="ctx-p">Un script en Python se conectaba a la base <strong>Firebird de Microsip</strong>, leía las existencias, normalizaba los nombres de producto y regeneraba esta página. Corría <strong>automáticamente cada día</strong> con el Programador de tareas de Windows. El personal y los clientes escaneaban un <strong>código QR</strong> pegado en el piso de venta y veían las existencias al momento desde su celular, sin ir a la terminal del ERP.</p>
+    <div class="ctx-flow"><span>Firebird / Microsip</span><i>&rarr;</i><span>Python</span><i>&rarr;</i><span>HTML</span><i>&rarr;</i><span>QR</span><i>&rarr;</i><span>Celular</span></div>
+  </div>
+
   <header>
     <h1 id="tienda"></h1>
     <p class="meta">Existencias actualizadas el <span id="actualizado"></span></p>
