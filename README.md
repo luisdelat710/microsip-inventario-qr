@@ -1,6 +1,6 @@
 # Microsip Inventory → QR Stock Page
 
-**Live demo:** https://luisdelat710.github.io/microsip-inventario-qr/demo/ *(sample data)*
+**Live demo:** https://luisdelat710.github.io/microsip-inventario-qr/ *(sample data)*
 
 A lightweight tool that pulls live stock levels from a **Microsip ERP** (Firebird database) and publishes them as a mobile-friendly web page on the store's local network. Customers and sales staff scan a QR code in the showroom and see what's actually in stock, in boxes and square meters, without asking at the counter.
 
