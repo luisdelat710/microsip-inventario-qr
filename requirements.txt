@@ -1,0 +1,2 @@
+firebird-driver>=1.10
+qrcode[pil]>=7.4

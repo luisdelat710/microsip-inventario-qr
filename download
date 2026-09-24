@@ -1,0 +1,7 @@
+config.ini
+output/
+__pycache__/
+*.pyc
+*.FDB
+*.fdb
+.venv/

@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Existencias · Pisos y Azulejos Acosta</title>
+<style>
+  :root {
+    --porcelana: #F4F6F7;
+    --superficie: #FFFFFF;
+    --junta: #D5DADD;
+    --cobalto: #1B3A63;
+    --tinta: #1E2A36;
+    --tenue: #5E6B77;
+    --ok: #2F7A4E;
+    --pocas: #A8661A;
+    --agotado: #A33A2E;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --porcelana: #141B22;
+      --superficie: #1C252E;
+      --junta: #2E3A45;
+      --cobalto: #8FB3E6;
+      --tinta: #E8EDF1;
+      --tenue: #9AA7B3;
+      --ok: #6CC291;
+      --pocas: #E0A55A;
+      --agotado: #E57F72;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--porcelana);
+    color: var(--tinta);
+    font-family: "Avenir Next", "Segoe UI Variable Text", "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+  }
+  .contenedor { max-width: 680px; margin: 0 auto; padding: 0 16px 40px; }
+
+  header { padding: 28px 0 18px; }
+  h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--cobalto);
+  }
+  .meta { margin: 4px 0 0; color: var(--tenue); font-size: 0.9rem; }
+  .demo {
+    display: inline-block; margin-top: 10px; padding: 2px 10px;
+    border: 1px dashed var(--pocas); border-radius: 4px;
+    color: var(--pocas); font-size: 0.8rem;
+  }
+
+  .barra {
+    position: sticky; top: 0; z-index: 2;
+    background: var(--porcelana);
+    padding: 10px 0 12px;
+    border-bottom: 1px solid var(--junta);
+  }
+  input[type=search] {
+    width: 100%; padding: 12px 14px; font: inherit;
+    border: 1px solid var(--junta); border-radius: 6px;
+    background: var(--superficie); color: var(--tinta);
+  }
+  input[type=search]:focus-visible, .filtro:focus-visible {
+    outline: 3px solid var(--cobalto); outline-offset: 1px;
+  }
+  .filtros { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; }
+  .filtro {
+    flex: none; padding: 6px 12px; font: inherit; font-size: 0.9rem;
+    border: 1px solid var(--junta); border-radius: 999px;
+    background: var(--superficie); color: var(--tinta); cursor: pointer;
+  }
+  .filtro[aria-pressed=true] { background: var(--cobalto); border-color: var(--cobalto); color: var(--superficie); }
+
+  ul { list-style: none; margin: 0; padding: 0; }
+  li {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: 14px; align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--junta);
+  }
+  /* La pieza: el recuadro respeta la proporción real del formato (18x60, 45x45…) */
+  .pieza { width: 56px; height: 56px; display: grid; place-items: center; }
+  .pieza span {
+    display: block; border: 2px solid var(--junta); border-radius: 2px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);
+  }
+  .pieza .saco { width: 34px; height: 40px; border-radius: 8px 8px 4px 4px; }
+  .nombre { font-weight: 600; font-size: 0.98rem; }
+  .detalle { color: var(--tenue); font-size: 0.85rem; }
+  .cantidad { text-align: right; white-space: nowrap; }
+  .cantidad strong { display: block; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+  .cantidad small { color: var(--tenue); font-size: 0.8rem; }
+  .estado { font-size: 0.8rem; font-weight: 600; }
+  .estado.ok { color: var(--ok); }
+  .estado.pocas { color: var(--pocas); }
+  .estado.agotado { color: var(--agotado); }
+  li.sin-existencia .nombre, li.sin-existencia .cantidad strong { opacity: .55; }
+
+  .vacio { padding: 32px 0; color: var(--tenue); text-align: center; }
+  footer { margin-top: 24px; color: var(--tenue); font-size: 0.8rem; }
+</style>
+</head>
+<body>
+<div class="contenedor">
+  <header>
+    <h1 id="tienda"></h1>
+    <p class="meta">Existencias actualizadas el <span id="actualizado"></span></p>
+    <span class="demo" id="aviso-demo" hidden>Datos de demostración</span>
+  </header>
+
+  <div class="barra">
+    <label for="buscar" hidden>Buscar producto</label>
+    <input id="buscar" type="search" placeholder="Busca por nombre, formato o clave" autocomplete="off">
+    <div class="filtros" role="group" aria-label="Filtrar por tipo" id="filtros"></div>
+  </div>
+
+  <ul id="lista" aria-live="polite"></ul>
+  <p class="vacio" id="vacio" hidden>No hay productos que coincidan. Prueba con otra palabra, como “60x60” o “gris”.</p>
+
+  <footer>Las existencias se toman directamente del sistema de la tienda. Confirma con tu vendedor antes de apartar material.</footer>
+</div>
+
+<script>
+const DATOS = {"tienda": "Pisos y Azulejos Acosta", "actualizado": "24/09/2026 00:08", "demo": true, "articulos": [{"clave": "PJ3636", "nombre": "PISO JARAL 36X36 BEIGE 1RA 2.08 M2", "categoria": "PISO", "formato": "36x36", "calidad": "1ra", "unidad": "CAJA", "existencia": 142.0, "m2_caja": 2.08, "m2_total": 295.36}, {"clave": "PS4545M", "nombre": "PISO SENA 45X45 MARFIL 1RA 2.03 M2", "categoria": "PISO", "formato": "45x45", "calidad": "1ra", "unidad": "CAJA", "existencia": 64.0, "m2_caja": 2.03, "m2_total": 129.92}, {"clave": "PCA1860", "nombre": "PISO CHAPALA ABEDUL 18X60 1RA 1.51 M2", "categoria": "PISO", "formato": "18x60", "calidad": "1ra", "unidad": "CAJA", "existencia": 38.0, "m2_caja": 1.51, "m2_total": 57.38}, {"clave": "PV5555", "nombre": "PISO VARENA 55X55 GRIS 1RA 1.51 M2", "categoria": "PISO", "formato": "55x55", "calidad": "1ra", "unidad": "CAJA", "existencia": 9.0, "m2_caja": 1.51, "m2_total": 13.59}, {"clave": "PN6060", "nombre": "PISO NOGAL 60X60 PORCELANATO 1RA 1.44 M2", "categoria": "PISO", "formato": "60x60", "calidad": "1ra", "unidad": "CAJA", "existencia": 27.0, "m2_caja": 1.44, "m2_total": 38.88}, {"clave": "PT3333", "nombre": "PISO TERRA 33X33 COBRE 2DA 2.00 M2", "categoria": "PISO", "formato": "33x33", "calidad": "2da", "unidad": "CAJA", "existencia": 0.0, "m2_caja": 2.0, "m2_total": 0.0}, {"clave": "PM20120", "nombre": "PISO MADERA ROBLE 20X120 PORCELANATO 1RA 1.44 M2", "categoria": "PISO", "formato": "20x120", "calidad": "1ra", "unidad": "CAJA", "existencia": 15.0, "m2_caja": 1.44, "m2_total": 21.6}, {"clave": "PC4545", "nombre": "PISO CANTERA 45X45 ROSA 1RA 2.03 M2", "categoria": "PISO", "formato": "45x45", "calidad": "1ra", "unidad": "CAJA", "existencia": 4.0, "m2_caja": 2.03, "m2_total": 8.12}, {"clave": "MM2030C", "nombre": "MURO MAZAMITLA 20X30 CREMA 1RA 1.50 M2", "categoria": "MURO", "formato": "20x30", "calidad": "1ra", "unidad": "CAJA", "existencia": 51.0, "m2_caja": 1.5, "m2_total": 76.5}, {"clave": "MB2540", "nombre": "MURO BRISA 25X40 BLANCO 1RA 1.50 M2", "categoria": "MURO", "formato": "25x40", "calidad": "1ra", "unidad": "CAJA", "existencia": 22.0, "m2_caja": 1.5, "m2_total": 33.0}, {"clave": "MM3060", "nombre": "MURO MARMOLIZADO 30X60 CARRARA 1RA 1.44 M2", "categoria": "MURO", "formato": "30x60", "calidad": "1ra", "unidad": "CAJA", "existencia": 6.0, "m2_caja": 1.44, "m2_total": 8.64}, {"clave": "MT2030", "nombre": "MURO TALAVERA 20X30 AZUL 1RA 1.50 M2", "categoria": "MURO", "formato": "20x30", "calidad": "1ra", "unidad": "CAJA", "existencia": 0.0, "m2_caja": 1.5, "m2_total": 0.0}, {"clave": "ADP20G", "nombre": "ADHESIVO PERDURA GRIS 20 KG", "categoria": "ADHESIVO", "formato": null, "calidad": null, "unidad": "SACO", "existencia": 180.0, "m2_caja": null, "m2_total": null}, {"clave": "ADP20B", "nombre": "ADHESIVO PERDURA BLANCO 20 KG", "categoria": "ADHESIVO", "formato": null, "calidad": null, "unidad": "SACO", "existencia": 74.0, "m2_caja": null, "m2_total": null}, {"clave": "ADPP20", "nombre": "ADHESIVO PERDURA PORCELANATO 20 KG", "categoria": "ADHESIVO", "formato": null, "calidad": null, "unidad": "SACO", "existencia": 33.0, "m2_caja": null, "m2_total": null}, {"clave": "BQ5GR", "nombre": "BOQUILLA SIN ARENA GRIS 5 KG", "categoria": "BOQUILLA", "formato": null, "calidad": null, "unidad": "BOLSA", "existencia": 40.0, "m2_caja": null, "m2_total": null}, {"clave": "BQ5BL", "nombre": "BOQUILLA CON ARENA BLANCO 5 KG", "categoria": "BOQUILLA", "formato": null, "calidad": null, "unidad": "BOLSA", "existencia": 3.0, "m2_caja": null, "m2_total": null}, {"clave": "CR3MM", "nombre": "CRUCETAS 3 MM BOLSA 100 PZ", "categoria": "ACCESORIO", "formato": null, "calidad": null, "unidad": "BOLSA", "existencia": 56.0, "m2_caja": null, "m2_total": null}, {"clave": "NV100", "nombre": "NIVELADORES CLIP BOLSA 100 PZ", "categoria": "ACCESORIO", "formato": null, "calidad": null, "unidad": "BOLSA", "existencia": 12.0, "m2_caja": null, "m2_total": null}]};
+
+const TONOS = [
+  ["CARRARA", "#ECEBE8"], ["BLANCO", "#F3F2EE"], ["MARFIL", "#EFE6D2"], ["CREMA", "#EADFC6"],
+  ["BEIGE", "#D9C7A7"], ["ROSA", "#D8AFA0"], ["COBRE", "#B06A45"], ["GRIS", "#9EA3A6"],
+  ["AZUL", "#3F6FA8"], ["ROBLE", "#A67C52"], ["NOGAL", "#7A5436"], ["ABEDUL", "#C9A97E"]
+];
+const ETIQUETAS = { TODOS: "Todo", PISO: "Pisos", MURO: "Muros", ADHESIVO: "Adhesivos", BOQUILLA: "Boquillas", ACCESORIO: "Accesorios" };
+const fmt = new Intl.NumberFormat("es-MX", { maximumFractionDigits: 2 });
+
+function tono(nombre) {
+  const t = TONOS.find(([k]) => nombre.includes(k));
+  return t ? t[1] : "#C8CDD1";
+}
+function titulo(s) {
+  return s.toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase()).replace(/(\d+)X(\d+)/gi, "$1×$2").replace(/ M2\b/i, " m²");
+}
+function estado(a) {
+  if (a.existencia <= 0) return ["agotado", "Agotado"];
+  if (a.existencia < 10) return ["pocas", "Quedan pocas"];
+  return ["ok", "Disponible"];
+}
+function pieza(a) {
+  const el = document.createElement("div");
+  el.className = "pieza";
+  const s = document.createElement("span");
+  if (a.formato) {
+    const [w, h] = a.formato.split("x").map(Number);
+    const escala = 48 / Math.max(w, h);
+    s.style.width = Math.max(12, Math.round(w * escala)) + "px";
+    s.style.height = Math.max(12, Math.round(h * escala)) + "px";
+  } else {
+    s.className = "saco";
+  }
+  s.style.background = tono(a.nombre);
+  el.appendChild(s);
+  return el;
+}
+
+const lista = document.getElementById("lista");
+const buscar = document.getElementById("buscar");
+let categoria = "TODOS";
+
+function pintar() {
+  const q = buscar.value.trim().toUpperCase().replace("×", "X");
+  const vis = DATOS.articulos.filter(a =>
+    (categoria === "TODOS" || a.categoria === categoria) &&
+    (!q || a.nombre.includes(q) || a.clave.toUpperCase().includes(q)));
+  lista.replaceChildren(...vis.map(a => {
+    const li = document.createElement("li");
+    const [cls, txt] = estado(a);
+    if (cls === "agotado") li.className = "sin-existencia";
+    const info = document.createElement("div");
+    const detalle = [a.formato && a.formato.replace("x", "×") + " cm", a.calidad && "calidad " + a.calidad, a.clave].filter(Boolean).join(", ");
+    info.innerHTML = `<div class="nombre"></div><div class="detalle"></div><div class="estado ${cls}">${txt}</div>`;
+    info.querySelector(".nombre").textContent = titulo(a.nombre.replace(/\s\d+(\.\d+)?\s*M2$/, "").replace(/\s\d{2,3}\s*X\s*\d{2,3}/, "").replace(/\s(1RA|2DA)\b/, ""));
+    info.querySelector(".detalle").textContent = detalle;
+    const cant = document.createElement("div");
+    cant.className = "cantidad";
+    cant.innerHTML = `<strong>${fmt.format(a.existencia)}</strong><small>${a.unidad.toLowerCase()}${a.existencia === 1 ? "" : "s"}</small>` +
+      (a.m2_total ? `<br><small>${fmt.format(a.m2_total)} m²</small>` : "");
+    li.append(pieza(a), info, cant);
+    return li;
+  }));
+  document.getElementById("vacio").hidden = vis.length > 0;
+}
+
+document.getElementById("tienda").textContent = DATOS.tienda;
+document.getElementById("actualizado").textContent = DATOS.actualizado;
+document.getElementById("aviso-demo").hidden = !DATOS.demo;
+
+const presentes = ["TODOS", ...Object.keys(ETIQUETAS).filter(k => DATOS.articulos.some(a => a.categoria === k))];
+document.getElementById("filtros").replaceChildren(...presentes.map(k => {
+  const b = document.createElement("button");
+  b.className = "filtro"; b.type = "button"; b.textContent = ETIQUETAS[k];
+  b.setAttribute("aria-pressed", k === categoria);
+  b.onclick = () => {
+    categoria = k;
+    document.querySelectorAll(".filtro").forEach(x => x.setAttribute("aria-pressed", x === b));
+    pintar();
+  };
+  return b;
+}));
+buscar.addEventListener("input", pintar);
+pintar();
+</script>
+</body>
+</html>
